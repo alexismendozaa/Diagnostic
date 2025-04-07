@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+        #search-bar {
+            padding: 10px;
+            width: 100%;
+            font-size: 16px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+        }
+        .pokemon-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .pokemon-card {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            width: 150px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        .pokemon-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+        }
+        .pokemon-card h3 {
+            font-size: 18px;
+            color: #333;
+        }
+        .pokemon-card:hover {
+            transform: scale(1.05);
+            transition: all 0.3s;
+        }
+        .pokemon-info {
+            display: none;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pokemon-info img {
+            width: 200px;
+            height: auto;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Buscar Pokémon</h1>
+    <input type="text" id="search-bar" placeholder="Buscar Pokémon..." onkeyup="searchPokemon()">
+    
+    <div class="pokemon-list" id="pokemon-list"></div>
+
+    <div class="pokemon-info" id="pokemon-info">
+        <img id="pokemon-img" src="" alt="">
+        <h2 id="pokemon-name"></h2>
+        <p id="pokemon-id"></p>
+        <p id="pokemon-types"></p>
+        <p id="pokemon-abilities"></p>
+        <button onclick="closeInfo()">Cerrar</button>
+    </div>
+
+    <script>
+        const searchBar = document.getElementById('search-bar');
+        const pokemonList = document.getElementById('pokemon-list');
+        const pokemonInfo = document.getElementById('pokemon-info');
+        const pokemonName = document.getElementById('pokemon-name');
+        const pokemonImg = document.getElementById('pokemon-img');
+        const pokemonId = document.getElementById('pokemon-id');
+        const pokemonTypes = document.getElementById('pokemon-types');
+        const pokemonAbilities = document.getElementById('pokemon-abilities');
+
+        // Función para cargar los Pokémon más populares (primero 20)
+        function loadPopularPokemons() {
+            fetch('https://pokeapi.co/api/v2/pokemon?limit=20')
+                .then(response => response.json())
+                .then(data => {
+                    const pokemons = data.results;
+                    pokemonList.innerHTML = '';
+                    pokemons.forEach(pokemon => {
+                        fetchPokemonDetails(pokemon.url);
+                    });
+                });
+        }
+
+        // Función para obtener los detalles de cada Pokémon
+        function fetchPokemonDetails(url) {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const pokemonCard = document.createElement('div');
+                    pokemonCard.classList.add('pokemon-card');
+                    pokemonCard.onclick = () => showPokemonInfo(data);
+
+                    const pokemonImage = data.sprites.front_default;
+                    const pokemonName = data.name.charAt(0).toUpperCase() + data.name.slice(1);
+                    pokemonCard.innerHTML = `
+                        <img src="${pokemonImage}" alt="${pokemonName}">
+                        <h3>${pokemonName}</h3>
+                    `;
+
+                    pokemonList.appendChild(pokemonCard);
+                });
+        }
+
+        // Función para mostrar la información detallada del Pokémon
+        function showPokemonInfo(pokemon) {
+            pokemonName.textContent = pokemon.name.charAt(0).toUpperCase() + pokemon.name.slice(1);
+            pokemonImg.src = pokemon.sprites.front_default;
+            pokemonId.textContent = `ID: ${pokemon.id}`;
+            
+            const types = pokemon.types.map(type => type.type.name).join(', ');
+            pokemonTypes.textContent = `Tipos: ${types}`;
+            
+            const abilities = pokemon.abilities.map(ability => ability.ability.name).join(', ');
+            pokemonAbilities.textContent = `Habilidades: ${abilities}`;
+            
+            pokemonInfo.style.display = 'block';
+        }
+
+        // Función para cerrar la vista de información
+        function closeInfo() {
+            pokemonInfo.style.display = 'none';
+        }
+
+        // Función de búsqueda de Pokémon
+        function searchPokemon() {
+            const searchTerm = searchBar.value.toLowerCase();
+            fetch(`https://pokeapi.co/api/v2/pokemon/${searchTerm}`)
+                .then(response => response.json())
+                .then(data => {
+                    pokemonList.innerHTML = '';
+                    showPokemonInfo(data);
+                })
+                .catch(() => {
+                    pokemonList.innerHTML = '<p>No se encontraron resultados.</p>';
+                });
+        }
+
+        // Cargar los Pokémon populares al inicio
+        loadPopularPokemons();
+    </script>
+    
+</body>
+</html>
